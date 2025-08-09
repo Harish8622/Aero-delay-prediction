@@ -1,5 +1,9 @@
-pandas
+pandas==2.2.2
+meteostat==1.6.7
+pyarrow==12.0.0
+tqdm
 numpy
 scikit-learn
 lightgbm
 joblib
+kagglehub
