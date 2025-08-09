@@ -36,6 +36,7 @@ logs/
 data/
 !data/raw/
 !data/raw/*.csv
+notebooks/weather_cache/
 
 # Models and outputs
 models/
