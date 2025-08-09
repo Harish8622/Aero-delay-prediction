@@ -4,7 +4,7 @@ import os
 
 class PreprocessingParams:
     def __init__(self):
-        self.start_date = "2022-07-31"  # Start date for filtering flights
+        self.start_date = "2021-07-31"  # Start date for filtering flights
         self.wind_kmh_threshold = 25  # Wind speed threshold for "wind" flag
         self.max_workers = 12  # Number of parallel fetch threads
         self.force_refresh = True  # If True, ignore cache and re-download

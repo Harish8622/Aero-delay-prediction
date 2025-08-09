@@ -19,10 +19,10 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # functiont o do this # load and filter dataset for rows after 31-07-2024
 def load_and_filter_dataset(file_path, start_date):
-    """Loads the dataset and filters for rows after 31-07-2024."""
+    """Loads the dataset and filters for rows after selected date."""
     df = pd.read_csv(file_path)
     df["FL_DATE"] = pd.to_datetime(df["FL_DATE"])
-    filtered_df = df[df["FL_DATE"] > "2022-07-31"]
+    filtered_df = df[df["FL_DATE"] > start_date]
     return filtered_df
 
 
