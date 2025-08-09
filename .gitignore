@@ -1,0 +1,62 @@
+# =========================================
+# Python
+# =========================================
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Jupyter notebooks
+.ipynb_checkpoints
+
+# VSCode / IDE files
+.vscode/
+.idea/
+*.swp
+
+# Logs
+*.log
+logs/
+
+# =========================================
+# Project-specific
+# =========================================
+
+# Data (only keep small sample CSVs)
+data/
+!data/raw/
+!data/raw/*.csv
+
+# Models and outputs
+models/
+reports/
+*.pkl
+*.joblib
+
+# DVC cache
+.dvc/
+*.dvc
+
+# MLflow local tracking
+mlruns/
+
+# Cache & temp
+.cache/
+tmp/
+temp/
+
+# =========================================
+# OS-specific
+# =========================================
+.DS_Store
+Thumbs.db
