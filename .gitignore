@@ -15,9 +15,10 @@ dist/
 venv/
 env/
 ENV/
+.env
 
 # Jupyter notebooks
-.ipynb_checkpoints
+.ipynb_checkpoints/
 
 # VSCode / IDE files
 .vscode/
@@ -32,10 +33,23 @@ logs/
 # Project-specific
 # =========================================
 
-# Data (only keep small sample CSVs)
+# Data
 data/
 !data/raw/
 !data/raw/*.csv
+!data/processed/
+!data/processed/*.csv
+
+# Test data (keep only small CSVs, ignore cache)
+test_data/
+!test_data/data/
+!test_data/data/raw/
+!test_data/data/raw/*.csv
+!test_data/data/processed/
+!test_data/data/processed/*.csv
+test_data/weather_cache/
+
+# Weather cache
 notebooks/weather_cache/
 
 # Models and outputs

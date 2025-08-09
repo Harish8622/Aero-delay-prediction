@@ -7,3 +7,7 @@ scikit-learn
 lightgbm
 joblib
 kagglehub
+holidays
+seaborn
+matplotlib
+python-dotenv
