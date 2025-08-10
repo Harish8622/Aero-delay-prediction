@@ -60,16 +60,6 @@ def create_delay_flag(df, delay_threshold=15):
 
 # ========= Weather Enrichment (helpers + orchestrator) =========
 
-import warnings
-warnings.simplefilter("ignore")  # silence pandas FutureWarnings
-
-from pathlib import Path
-from datetime import datetime
-from concurrent.futures import ThreadPoolExecutor, as_completed
-
-import pandas as pd
-from meteostat import Hourly, Point
-from tqdm.auto import tqdm
 
 
 # ----------------------------- #
@@ -205,14 +195,12 @@ def _merge_flags(df: pd.DataFrame, wx_flags: pd.DataFrame) -> pd.DataFrame:
         .merge(wx_flags, on=["IATA", "ts"], how="left")
         .rename(columns={"rain": "arr_rain", "ice": "arr_ice", "wind": "arr_wind"})
     )
-    for c in ["dep_rain","dep_ice","dep_wind","arr_rain","arr_ice","arr_wind"]:
-    df[c] = df[c].fillna(0).astype("int8")
+
     out = df.copy()
     out["dep_rain"], out["dep_ice"], out["dep_wind"] = dep["dep_rain"].values, dep["dep_ice"].values, dep["dep_wind"].values
     out["arr_rain"], out["arr_ice"], out["arr_wind"] = arr["arr_rain"].values, arr["arr_ice"].values, arr["arr_wind"].values
 
     for col in ["dep_rain", "dep_ice", "dep_wind", "arr_rain", "arr_ice", "arr_wind"]:
-        out[f"{col}_missing"] = out[col].isna().astype("int8")
         out[col] = out[col].fillna(0).astype("int8")
 
     return out
@@ -263,62 +251,6 @@ def enrich_with_weather_flags(
     # 7) Merge to flights
     df_enriched = _merge_flags(df_keyed, wx_flags)
     return df_enriched
-
-# ---------------------------------- #
-# Orchestrator (public entry point)
-# ---------------------------------- #
-
-
-def enrich_with_weather_flags(
-    df_flights: pd.DataFrame,
-    airports_csv: str = "../data/raw/airports.csv",  # Must contain IATA, lat, lon
-    cache_dir: str = "weather_cache",  # Where to save raw weather data
-    wind_kmh_threshold: int = 30,  # Wind speed threshold for "wind" flag
-    max_workers: int = 12,  # Parallel fetch threads
-    force_refresh: bool = True,  # If True, ignore cache and re-download
-) -> pd.DataFrame:
-    """
-    High-level pipeline:
-      1) Validate inputs
-      2) Add dep/arr hour keys
-      3) Load airports & filter flights to known airports
-      4) Build unique (IATA, year) fetch list
-      5) Download (or load cached) RAW weather per airport-year
-      6) Compute rain/ice/wind flags from RAW
-      7) Merge flags back into flights
-    """
-    # 1) Validate
-    _validate_flights(df_flights)
-
-    # 2) Hour keys
-    df_keyed = _add_hour_keys(df_flights)
-
-    # 3) Airports & filter
-    ap = _load_airports(airports_csv)
-    # 2) Hour keys
-    df_keyed = _add_hour_keys(df_flights)
-    df_keyed["dep_hour_dt"] = pd.to_datetime(df_keyed["dep_hour_dt"]).dt.floor("h")
-    df_keyed["arr_hour_dt"] = pd.to_datetime(df_keyed["arr_hour_dt"]).dt.floor("h")
-    df_keyed = df_keyed[
-        df_keyed["ORIGIN"].isin(ap.index) & df_keyed["DEST"].isin(ap.index)
-    ].copy()
-
-    # 4) Needed pairs
-    pairs = _build_needed_pairs(df_keyed, ap)
-
-    # 5) Fetch RAW with progress
-    cache_path = Path(cache_dir)
-    raw_weather = _fetch_all_raw_with_progress(
-        pairs, cache_path, max_workers, force_refresh
-    )
-
-    # 6) Compute flags
-    wx_flags = _compute_flags_from_raw(raw_weather, wind_kmh_threshold)
-
-    # 7) Merge to flights
-    df_enriched = _merge_flags(df_keyed, wx_flags)
-    return df_enriched
-
 
 def add_temporal_features(df: pd.DataFrame) -> pd.DataFrame:
     """
