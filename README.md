@@ -63,3 +63,5 @@ the delay threshold was 15 and wind threshold was 25
 
 
 now using threshold 30 with windspseed 30 and data from 01-01-2022 onwardss
+
+add a cautious metric

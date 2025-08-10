@@ -4,7 +4,7 @@ import os
 
 class PreprocessingParams:
     def __init__(self):
-        self.start_date = "2022-01-01"  # Start date for filtering flights
+        self.start_date = "2019-01-01"  # Start date for filtering flights 2019 onwards
         self.wind_kmh_threshold = 30  # Wind speed threshold for "wind" flag
         self.max_workers = 12  # Number of parallel fetch threads
         self.force_refresh = True  # If True, ignore cache and re-download
@@ -44,7 +44,6 @@ class PreprocessingParams:
             "DELAY_DUE_LATE_AIRCRAFT",
             "DEP_TIME",
             # Raw datetime keys (already used to make features)
-            "FL_DATE",
             "dep_hour_dt",
             "arr_hour_dt",
         ]
