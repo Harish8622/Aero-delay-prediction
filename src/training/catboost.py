@@ -43,14 +43,14 @@ def main():
     parser = argparse.ArgumentParser(
         description="Train CatBoost (time-split: train=2022, test=2023+)."
     )
-    parser.add_argument("--data", type=str, default="test_date/data/processed/preprocessed_data.csv")
-    parser.add_argument("--target", type=str, default="DELAY_FLAG_30")
-    parser.add_argument("--model_dir", type=str, default="models")
-    parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--iterations", type=int, default=800)
-    parser.add_argument("--learning_rate", type=float, default=0.06)
-    parser.add_argument("--depth", type=int, default=8)
-    parser.add_argument("--l2_leaf_reg", type=float, default=3.0)
+    parser.add_argument("--data", type=str, required=True)
+    parser.add_argument("--target", type=str, required=True)
+    parser.add_argument("--model_dir", type=str, required=True)
+    parser.add_argument("--seed", type=int, required=True)
+    parser.add_argument("--iterations", type=int, required=True)
+    parser.add_argument("--learning_rate", type=float, required=True)
+    parser.add_argument("--depth", type=int, required=True)
+    parser.add_argument("--l2_leaf_reg", type=float, required=True)
     args = parser.parse_args()
 
     os.makedirs(args.model_dir, exist_ok=True)
