@@ -11,3 +11,4 @@ holidays
 seaborn
 matplotlib
 python-dotenv
+xgboost

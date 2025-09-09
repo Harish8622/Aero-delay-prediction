@@ -37,7 +37,7 @@ df = load_and_filter_dataset(
 df = removed_diverted_or_cancelled(df)
 
 # Create delay flag
-df = create_delay_flag(df, delay_threshold=15)
+df = create_delay_flag(df, delay_threshold=pp_params.delay_threshold)
 
 # Enrich with weather flags
 df = enrich_with_weather_flags(
