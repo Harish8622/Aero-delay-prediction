@@ -85,7 +85,11 @@ def route_confirmation(state: State):
         '{last_message}'
 
         - Valid airlines: {', '.join(airlines)}
-        - Airports must be valid IATA codes.
+            if the user misspells an airline name, or its not clear make a best guess
+        - Airports must be valid IATA codes. The user does not have to specify the code
+            if they say New York or NY you should infer JFK or LGA based on context
+-       - ALways try to provide the IATA code for the arrival and departure airport even if it is not obvious, make the best guess
+
         - If the user says **"now"**, use {now.strftime('%Y-%m-%d %H:%M:%S')}.
         - If they give a **relative date** (e.g. "tomorrow", "next Friday", "in 3 days"),
         **calculate the exact datetime** based on {now.strftime('%Y-%m-%d %H:%M:%S')}.
@@ -220,11 +224,50 @@ def final_prediction(state: dict):
     return {
         "messages": [{"role": "assistant", "content": json.dumps({
             "probability_of_delay": proba,
-            "delay_prediction": "Delayed" if prediction == 1 else "On Time"
+            "delay_prediction": "Delayed" if prediction == 1 else "On Time",
+            "airline": last_message["airline"],
+            "origin": last_message["origin"],
+            "destination": last_message["destination"],
+            "distance": last_message["distance"],        
+            "timestamp": last_message["timestamp"],
+            "dep_ice": last_message['dep_ice'],
+            "dep_rain": last_message['dep_rain'],
+            "dep_wind": last_message['dep_wind'],
+            "arr_ice": last_message['arr_ice'],
+            "arr_rain": last_message['arr_rain'],
+            "arr_wind": last_message['arr_wind']
+
         })}]
     }
 
-
+def final_response(state: dict):
+    last_message = json.loads(state["messages"][-1].content)
+    airline = last_message["airline"]
+    origin = last_message["origin"]
+    destination = last_message["destination"]
+    timestamp = last_message["timestamp"]
+    probability = last_message["probability_of_delay"]
+    prediction = last_message["delay_prediction"]
+    departure_ice = last_message['dep_ice']
+    departure_rain = last_message['dep_rain']
+    departure_wind = last_message['dep_wind']
+    arrival_ice = last_message['arr_ice']
+    arrival_rain = last_message['arr_rain']
+    arrival_wind = last_message['arr_wind']
+    response = llm.invoke(
+        f"""
+        You are an expert travel assistant.
+        A customer is flying from {origin} to {destination} on {timestamp} on {airline}.
+        Based on weather conditions (departure - ice: {departure_ice}, rain: {departure_rain}, wind: {departure_wind}; arrival - ice: {arrival_ice}, rain
+: {arrival_rain}, wind: {arrival_wind}) and other factors,
+        the probability of delay is {probability:.2%}, and the prediction is that the flight will be {prediction}.
+        Provide a concise summary to the customer about their flight status.
+        Say the full airport name not the IATA code in your response
+        Also mention the weather conditions at departure and arrival airports.
+        """
+    )
+    return {"messages": [{"role": "assistant", "content": response.content}]}
+    
 
 
 # -----------------------
@@ -236,6 +279,7 @@ graph_builder.add_node("get_flight_distance", get_flight_distance)
 graph_builder.add_node("get_temporal_features", get_temporal_features_node)
 graph_builder.add_node("get_weather", weather_node)
 graph_builder.add_node("final_prediction", final_prediction)
+graph_builder.add_node("final_response", final_response)
 
 
 graph_builder.add_edge(START, "route_confirmation")
@@ -244,7 +288,8 @@ graph_builder.add_edge("check_eligibility", "get_flight_distance")
 graph_builder.add_edge("get_flight_distance", "get_temporal_features")
 graph_builder.add_edge("get_temporal_features", "get_weather")
 graph_builder.add_edge("get_weather", "final_prediction")
-graph_builder.add_edge("final_prediction", END)
+graph_builder.add_edge("final_prediction", "final_response")
+graph_builder.add_edge("final_response", END)
 # graph_builder.add_edge("check_eligibility", END)  # End if not eligible
 customer_agent = graph_builder.compile()
 
@@ -255,14 +300,8 @@ user_input = input("Enter your flight details query: ")
 initial_state = {"messages": [{"role": "user", "content": user_input}]}
 
 state = customer_agent.invoke(initial_state)
-print("\n🤖 Assistant:", state["messages"][-1].content)
-# last_message = json.loads(state["messages"][-1].content)
-# origin = last_message["origin"]
-# destination = last_message["destination"]
+print("\n My Prediction:", state["messages"][-1].content)
 
-# distance = get_distance(origin, destination)
-
-# print(distance)
     # neeed to add tools so initially it asks customer for flight details
     # then uses tools to determine the required params
     # this is conditional edge depending on if there is enough info
