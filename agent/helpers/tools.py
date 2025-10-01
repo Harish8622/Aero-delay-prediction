@@ -5,6 +5,8 @@ import requests
 from datetime import datetime
 from dotenv import load_dotenv
 
+from src.inference.inference import predict
+
 # Load Visual Crossing API key
 load_dotenv()
 VISUAL_CROSSING_KEY = os.getenv("VISUAL_CROSSING_KEY")
@@ -118,3 +120,4 @@ def get_weather(lat: float, lon: float, date: str = "now"):
         "conditions": weather.get("conditions", ""),
         "date": weather.get("datetime", date)
     }
+

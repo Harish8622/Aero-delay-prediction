@@ -9,7 +9,7 @@ from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from langchain_openai import ChatOpenAI
 from typing_extensions import TypedDict
-from pydantic import BaseModel, Field, field_validator, ValidationError
+from pydantic import BaseModel, Field
 import pandas as pd
 import json
 from datetime import datetime
@@ -28,7 +28,7 @@ load_dotenv()
 os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
 
 # Initialize the model
-llm = ChatOpenAI(model="gpt-4o-mini")
+llm = ChatOpenAI(model="gpt-3.5-turbo")
 
 
 # define variables for inference params here
@@ -53,6 +53,14 @@ airports = pd.read_csv('data/raw/airports.csv')
 # following headers IATA,ICAO,name,lat,lon,tz_db
 
 
+
+class FlightParams(BaseModel):
+    airline: str = Field(..., description="Selected airline")
+    origin: str = Field(..., description="Departure airport IATA code")
+    destination: str = Field(..., description="Arrival airport IATA code")
+    timestamp: str = Field(..., description="in date time format")
+# first node should decide if customer has provided airline in scope, origin and destination in scope
+
 # -----------------------
 # State definition
 # -----------------------
@@ -61,82 +69,58 @@ class State(TypedDict):
 
 graph_builder = StateGraph(State)
 
-
-class FlightParams(BaseModel):
-    airline: str = Field(..., description="Selected airline")
-    origin: str = Field(..., description="Departure airport IATA code")
-    destination: str = Field(..., description="Arrival airport IATA code")
-    timestamp: datetime = Field(..., description="Flight departure time in UTC")
-
-    # Validate airline
-    @field_validator("airline")
-    def airline_supported(cls, v):
-        if v not in airlines:
-            raise ValueError(f"Unsupported airline: {v}")
-        return v
-
-    # Validate origin
-    @field_validator("origin")
-    def origin_supported(cls, v):
-        if v not in airports['IATA'].values:
-            raise ValueError(f"Unsupported origin airport: {v}")
-        return v
-
-    # Validate destination
-    @field_validator("destination")
-    def destination_supported(cls, v):
-        if v not in airports['IATA'].values:
-            raise ValueError(f"Unsupported destination airport: {v}")
-        return v
-
 # -----------------------
 # Node: Route Confirmation
 # -----------------------
 def route_confirmation(state: State):
     last_message = state["messages"][-1]
-    now = datetime.now()
 
+    # Configure LLM to return structured output
     structured_llm = llm.with_structured_output(FlightParams)
-    try:
-        response: FlightParams = structured_llm.invoke(
-            f"""
-            You are an expert travel assistant.
-            Extract the airline, origin IATA, destination IATA, and timestamp from:
-            '{last_message}'
+    now = datetime.now()
+    response = structured_llm.invoke(
+        f"""
+        You are an expert travel assistant.
+        Extract the airline, origin airport (IATA), destination airport (IATA), and timestamp from:
+        '{last_message}'
 
-            - Valid airlines: {', '.join(airlines)}
-            - Airports must be valid IATA codes. Infer them if needed.
-            - If user says "now", use {now.strftime('%Y-%m-%d %H:%M:%S')}.
-            - If relative date, resolve to absolute datetime.
-            if user query is vague return best guess ensuring to meet the validation criteria
+        - Valid airlines: {', '.join(airlines)}
+            if the user misspells an airline name, or its not clear make a best guess
+        - Airports must be valid IATA codes. The user does not have to specify the code
+            if they say New York or NY you should infer JFK or LGA based on context
+-       - ALways try to provide the IATA code for the arrival and departure airport even if it is not obvious, make the best guess
 
-            Always return timestamp in YYYY-MM-DD HH:MM:SS.
-            """
-        )
+        - If the user says **"now"**, use {now.strftime('%Y-%m-%d %H:%M:%S')}.
+        - If they give a **relative date** (e.g. "tomorrow", "next Friday", "in 3 days"),
+        **calculate the exact datetime** based on {now.strftime('%Y-%m-%d %H:%M:%S')}.
 
-    except ValidationError as e:
-        # Handle validation errors directly from Pydantic
-        return {
-            "messages": [{
-                "role": "assistant",
-                "content": f"Invalid input: {e.errors()}"
-            }]
-        }
-
-    # If we got here, the model is valid 
-# If we got here, the model is valid 
-    print("DEBUG >>> content before json.loads:", repr(state["messages"][-1].content))
-    return {
-        "messages": [{
-            "role": "assistant",
-            "content": response.model_dump_json()  # ✅ this is guaranteed valid JSON
-        }]
-}
+        Always return the timestamp in **YYYY-MM-DD HH:MM:SS** format.
+        """
+    )
 
 
-# now combine everything else apart from prediction into one node
+    # Check if airline is supported
+    
+    return {"messages": [{"role": "assistant", "content": f'{{"airline": "{response.airline}", "origin": "{response.origin}", "destination": "{response.destination}", "timestamp": "{response.timestamp}"}}'}]}
 
 
+
+def check_eligibility(state: State):
+    last_message = json.loads(state["messages"][-1].content)
+    # ...existing code...
+    if last_message["airline"] in airlines and \
+       last_message["origin"] in airports['IATA'].values and \
+       last_message["destination"] in airports['IATA'].values:
+        return {"messages": [{"role": "assistant", "content": json.dumps({
+            "airline": last_message['airline'],
+            "origin": last_message['origin'],
+            "destination": last_message['destination'],
+            "timestamp": last_message['timestamp']
+        })}]}
+    else:
+        return {"messages": [{"role": "assistant", "content": json.dumps({
+            "error": f"Sorry, we do not support the airline {last_message['airline']} or one of the airports {last_message['origin']} or {last_message['destination']}. Please provide a different query."
+        })}]}
 
 def get_flight_distance(state: State):
     last_message = json.loads(state["messages"][-1].content)
@@ -180,7 +164,7 @@ def weather_node(state: dict):
     timestamp = last_message["timestamp"]  # YYYY-MM-DD HH:MM:SS
 
     # Extract date only for API
-    date = datetime.fromisoformat(timestamp.replace("Z", "+00:00")).strftime("%Y-%m-%d")
+    date = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d")
 
     # Get airport lat/lon from CSV
     origin = airports[airports["IATA"] == origin_code].iloc[0]
@@ -290,6 +274,7 @@ def final_response(state: dict):
 # Build Graph
 # -----------------------
 graph_builder.add_node("route_confirmation", route_confirmation)
+graph_builder.add_node("check_eligibility", check_eligibility)
 graph_builder.add_node("get_flight_distance", get_flight_distance)
 graph_builder.add_node("get_temporal_features", get_temporal_features_node)
 graph_builder.add_node("get_weather", weather_node)
@@ -298,7 +283,8 @@ graph_builder.add_node("final_response", final_response)
 
 
 graph_builder.add_edge(START, "route_confirmation")
-graph_builder.add_edge("route_confirmation", "get_flight_distance")
+graph_builder.add_edge("route_confirmation", "check_eligibility")
+graph_builder.add_edge("check_eligibility", "get_flight_distance")
 graph_builder.add_edge("get_flight_distance", "get_temporal_features")
 graph_builder.add_edge("get_temporal_features", "get_weather")
 graph_builder.add_edge("get_weather", "final_prediction")
@@ -316,3 +302,12 @@ initial_state = {"messages": [{"role": "user", "content": user_input}]}
 state = customer_agent.invoke(initial_state)
 print("\n\n👨‍✈️", state["messages"][-1].content)
 
+
+
+# add conditional edge on route confirmation so it goes back to the start if invalid
+    # neeed to add tools so initially it asks customer for flight details
+    # then uses tools to determine the required params
+    # this is conditional edge depending on if there is enough info
+    # use pydanbtic to ensure correct params
+    # then uses tool to call inference
+    # then returns to user
