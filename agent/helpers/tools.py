@@ -7,51 +7,26 @@ from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langchain_core.tools import tool
 
 from typing_extensions import TypedDict
-from pydantic import BaseModel, Field, field_validator, ValidationError
+from pydantic import ValidationError
 import pandas as pd
 import json
 from datetime import datetime
-
+from src.inference.inference import predict
+from agent.helpers.data_models import(
+    FlightParams, 
+    FinalPrediction,
+    DistanceParams,
+    TemporalParams,
+    WeatherParams,
+    airlines, 
+    airports,
+)
 from agent.model_config import llm
 import os
 
+load_dotenv()
+VISUAL_CROSSING_KEY = os.getenv("VISUAL_CROSSING_KEY")
 
-airlines = ["American Airlines", "Delta Air Lines", "United Airlines", "Southwest Airlines",
-        "Alaska Airlines", "JetBlue Airways", "Spirit Airlines", "Frontier Airlines",
-        "Hawaiian Airlines", "Allegiant Air", "Sun Country Airlines", "Copa Airlines",
-        "Aeromexico", "Air Canada", "WestJet", "British Airways", "Lufthansa",
-        "Emirates", "Qatar Airways", "Singapore Airlines"]
-
-
-airports = pd.read_csv('data/raw/airports.csv')
-
-
-class FlightParams(BaseModel):
-    airline: str = Field(..., description="Selected airline")
-    origin: str = Field(..., description="Departure airport IATA code")
-    destination: str = Field(..., description="Arrival airport IATA code")
-    timestamp: datetime = Field(..., description="Flight departure time in UTC")
-
-    # Validate airline
-    @field_validator("airline")
-    def airline_supported(cls, v):
-        if v not in airlines:
-            raise ValueError(f"Unsupported airline: {v}")
-        return v
-
-    # Validate origin
-    @field_validator("origin")
-    def origin_supported(cls, v):
-        if v not in airports['IATA'].values:
-            raise ValueError(f"Unsupported origin airport: {v}")
-        return v
-
-    # Validate destination
-    @field_validator("destination")
-    def destination_supported(cls, v):
-        if v not in airports['IATA'].values:
-            raise ValueError(f"Unsupported destination airport: {v}")
-        return v
 
 # -----------------------
 # Node: Route Confirmation
@@ -93,12 +68,6 @@ def route_confirmation(user_query: str):
         # Handle validation errors directly from Pydantic
         return f"Invalid input: {e.errors()}"
     
-
-    if response.origin not in airports['IATA'].values:
-        return f"Invalid input: Unsupported origin airport: {response.origin}"
-    if response.destination not in airports['IATA'].values:
-        return f"Invalid input: Unsupported destination airport: {response.destination}"
-
     return response
 
 
@@ -121,7 +90,7 @@ def distance(lat1, lon1, lat2, lon2):
 
     return distance
 
-@tool
+@tool(args_schema=DistanceParams)
 def get_distance(origin, destination):
     """
     given two IATA codes, return the distance between them
@@ -152,16 +121,14 @@ def get_temporal_features(timestamp):
     return day_of_week, month, hour_of_day, is_bank_holiday
 
 
-@tool
+@tool(args_schema=TemporalParams)
 def get_temporal_features_node(timestamp: datetime):
     """
     given a timestamp, return day_of_week, month, hour_of_day, is_bank_holiday
     """
     day_of_week, month, hour_of_day, is_bank_holiday = get_temporal_features(timestamp)
     return day_of_week, month, hour_of_day, is_bank_holiday
-# helper
-load_dotenv()
-VISUAL_CROSSING_KEY = os.getenv("VISUAL_CROSSING_KEY")
+
 
 def get_weather(lat: float, lon: float, date: str = "now"):
     """
@@ -205,7 +172,7 @@ def get_weather(lat: float, lon: float, date: str = "now"):
         "date": weather.get("datetime", date)
     }
 
-@tool
+@tool(args_schema=WeatherParams)
 def weather_node(origin: str, destination: str, timestamp: str):
     """ 
     given origin, destination IATA codes and timestamp, return weather conditions at both airports
@@ -227,7 +194,7 @@ def weather_node(origin: str, destination: str, timestamp: str):
     timestamp = timestamp
 
     # Extract date only for API
-    date = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d")
+    date = timestamp.strftime("%Y-%m-%d")
 
     # Get airport lat/lon from CSV
     origin = airports[airports["IATA"] == origin_code].iloc[0]
@@ -248,10 +215,9 @@ def weather_node(origin: str, destination: str, timestamp: str):
 
 
 
-from src.inference.inference import predict
 
 
-@tool
+@tool(args_schema=FinalPrediction)
 def final_prediction(airline, origin, destination, distance, day_of_week, month, hour_of_day, is_bank_holiday,
                      dep_rain, dep_ice, dep_wind,       
                      arr_rain, arr_ice, arr_wind):

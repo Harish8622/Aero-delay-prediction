@@ -18,6 +18,7 @@ import json
 from datetime import datetime
 from agent.model_config import llm
 from agent.helpers.tools import tools
+from agent.helpers.prompts import agent_node_prompt
 
 # define state
 class AgentState(TypedDict):
@@ -81,46 +82,16 @@ app = graph.compile()
 
 # define the system message
 
-system_message = """
-
-you are also capable of assisting with flight route confirmations only using the tools provided
-
-<<YOU MUST ALWAYS USE TOOLS WHENEVER POSSIBLE, DO NOT MAKE UP ANSWERS EVEB IF IT SEEMS OBVIOUS
-IF A TOOL CAN BE USED, USE IT, IF SOMETHING IS OUT OF SCOPE, SAY YOU CANNOT HELP. DO NOT MAKE UP ANSWERS>>
-
-<<<IF THE USER MENTIONS YOU ARE IN "TEST MODE" OR INFERS THIS, RETURN YOUR ANSWER BASED ON FOLLOWING INSTRUCTIONS>>>
-
-<<<IF THE USER MENTIONS FLIGHT QUERY YOU MUST ATTEMPT TO GET DISTANCE BETWEEN ORIGIN AND DESTINATION and TEMPORAL FEATURES and WEATHER CONDITIONS>>>
-
-<<<INSTRUCTIONS FOR TEST MODE:
-    - ALways start by listing the tools you have access to like this:
-        <<TOOLS AVAILABLE>>
-          [toolx, tooly]
-    - For each tool mention why or why you did not use it and if you use a tool, show the input next to it and the output from the tool:
-    - You must say exactly what you gave the tool and what it returned like this:
-        <<TOOL USAGE>>
-          [toolx: used because of xyz, input: {input}, output: {output}]
-    - Finally return your final answer:
-        <<FINAL ANSWER>>
-          [your final answer here]
-    >>> End of test mode instructions
-
-
-<<< IF THE USER DOES NOT MENTION TEST MODE, ANSWER HOW YOU SEE FIT, JUST DO NOT MAKE UP TOOL USAGE>>>
-
-If user tries to leave with exit or quit leave a nice goodbye message and end the conversation.
-
-"""
 
 conversation_state = {
     "messages": []}
 
-conversation_state["messages"].append(SystemMessage(content=system_message))
+conversation_state["messages"].append(SystemMessage(content=agent_node_prompt))
 
 user_message = ""
 
 while user_message.lower() not in ["exit", "quit"]:
-    user_message = input("I am a sentient calculator. Ask me anything!:")
+    user_message = input("I am here to give you insights on your upcoing flight!")
     conversation_state["messages"].append(HumanMessage(content= user_message))
     result_state = app.invoke(conversation_state)
     response = result_state["messages"][-1]
