@@ -33,7 +33,7 @@ def predict(
     arr_rain,
     arr_ice,
     arr_wind,
-    model_path="../models/catboost_time_split.cbm"
+    model_path="models/catboost_time_split.cbm"
 ):
     """
     Predict flight delay probability and class.
