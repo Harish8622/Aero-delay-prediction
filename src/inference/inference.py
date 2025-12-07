@@ -58,6 +58,7 @@ def predict(
     }])
     cat_cols = [c for c in cat_candidates if c in input_data.columns]
     model = CatBoostClassifier()
+    print(f"Loading model from {model_path} ...")
     model.load_model(model_path)
     pool = Pool(data=input_data, cat_features=cat_cols)
     proba = model.predict_proba(pool)[:, 1][0]

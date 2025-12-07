@@ -13,3 +13,7 @@ matplotlib
 python-dotenv
 xgboost
 catboost
+langchain 
+langchain-openai
+pydantic
+langgraph
