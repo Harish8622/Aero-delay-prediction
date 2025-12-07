@@ -85,3 +85,6 @@ param_dist = {
 ## Next Steps
 
 python -m agent.customer_agent run from root
+
+
+move into agent core the core functionalities

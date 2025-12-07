@@ -1,15 +1,11 @@
 import requests
 import holidays
 from dotenv import load_dotenv
-from langgraph.prebuilt import ToolNode
-from langchain_openai import ChatOpenAI
-from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langchain_core.tools import tool
 
-from typing_extensions import TypedDict
 from pydantic import ValidationError
 import pandas as pd
-import json
+
 from datetime import datetime
 from src.inference.inference import predict
 from agent.helpers.data_models import(
@@ -21,6 +17,8 @@ from agent.helpers.data_models import(
     airlines, 
     airports,
 )
+
+from agent.helpers.prompts import build_route_confirmation_prompt
 from agent.model_config import llm
 import os
 
@@ -45,27 +43,15 @@ def route_confirmation(user_query: str):
     """
     now = datetime.now()
 
-
+    prompt = build_route_confirmation_prompt(
+        user_query=user_query,
+        airlines=airlines,
+        now=now,
+    )
     structured_llm = llm.with_structured_output(FlightParams)
     try:
-        response: FlightParams = structured_llm.invoke(
-            f"""
-            You are an expert travel assistant.
-            Extract the airline, origin IATA, destination IATA, and timestamp from:
-            '{user_query}'
-
-            - Valid airlines: {', '.join(airlines)}
-            - Airports must be valid IATA codes. Infer them if needed.
-            - If user says "now", use {now.strftime('%Y-%m-%d %H:%M:%S')}.
-            - If relative date, resolve to absolute datetime.
-            if user query is vague return best guess ensuring to meet the validation criteria
-
-            Always return timestamp in YYYY-MM-DD HH:MM:SS.
-            """
-        )
-
+        response: FlightParams = structured_llm.invoke(prompt)
     except ValidationError as e:
-        # Handle validation errors directly from Pydantic
         return f"Invalid input: {e.errors()}"
     
     return response

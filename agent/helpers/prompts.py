@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Sequence
 
+
 def build_route_confirmation_prompt(
     user_query: str,
     airlines: Sequence[str],
@@ -29,6 +30,7 @@ Output:
 Return only fields that match the FlightParams schema.
 The timestamp must always be in this format: YYYY-MM-DD HH:MM:SS.
 """
+
 
 agent_node_prompt = """
 You are a flight-operations assistant specializing in route confirmation, flight feature extraction, 
