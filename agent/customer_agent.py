@@ -5,9 +5,11 @@ from langgraph.graph.message import add_messages
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from typing_extensions import TypedDict
-from agent.model_config import llm
-from agent.helpers.tools import tools
-from agent.helpers.prompts import agent_node_prompt
+from src.agent_core import (
+    llm,
+    tools,
+    agent_node_prompt,
+)
 
 
 # define state

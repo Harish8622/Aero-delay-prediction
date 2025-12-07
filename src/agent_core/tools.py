@@ -8,7 +8,7 @@ import pandas as pd
 
 from datetime import datetime
 from src.inference.inference import predict
-from agent.helpers.data_models import(
+from src.agent_core.data_models import(
     FlightParams, 
     FinalPrediction,
     DistanceParams,
@@ -18,8 +18,8 @@ from agent.helpers.data_models import(
     airports,
 )
 
-from agent.helpers.prompts import build_route_confirmation_prompt
-from agent.model_config import llm
+from src.agent_core.prompts import build_route_confirmation_prompt
+from src.agent_core.model_config import llm
 import os
 
 load_dotenv()
@@ -27,7 +27,7 @@ VISUAL_CROSSING_KEY = os.getenv("VISUAL_CROSSING_KEY")
 
 
 # -----------------------
-# Node: Route Confirmation
+# Tool: Route Confirmation
 # -----------------------
 @tool
 def route_confirmation(user_query: str):
@@ -56,9 +56,9 @@ def route_confirmation(user_query: str):
     
     return response
 
-
-
-
+# -----------------------
+# Tool: Get Distance
+# -----------------------
 
 def distance(lat1, lon1, lat2, lon2):
     """
@@ -91,6 +91,10 @@ def get_distance(origin, destination):
         raise ValueError("Invalid IATA code provided for origin or destination.")
 
 
+# -----------------------
+# Tool: Get Temporal Features
+# -----------------------
+
 def get_temporal_features(timestamp):
     """
     Given a timestamp, return day_of_week, month, hour_of_day, is_bank_holiday 
@@ -115,6 +119,10 @@ def get_temporal_features_node(timestamp: datetime):
     day_of_week, month, hour_of_day, is_bank_holiday = get_temporal_features(timestamp)
     return day_of_week, month, hour_of_day, is_bank_holiday
 
+
+# -----------------------
+# Tool: Get Weather
+# -----------------------
 
 def get_weather(lat: float, lon: float, date: str = "now"):
     """
@@ -201,7 +209,9 @@ def weather_node(origin: str, destination: str, timestamp: str):
 
 
 
-
+# -----------------------
+# Tool: Final Prediction
+# -----------------------
 
 @tool(args_schema=FinalPrediction)
 def final_prediction(airline, origin, destination, distance, day_of_week, month, hour_of_day, is_bank_holiday,
