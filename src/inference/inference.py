@@ -4,7 +4,6 @@ from catboost import CatBoostClassifier, Pool
 from src.params.inference_params import InferenceParams
 
 
-
 params = InferenceParams()
 cat_candidates = params.cat_candidates
 

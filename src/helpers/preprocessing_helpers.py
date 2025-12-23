@@ -1,13 +1,8 @@
-# pre processing helpers for the Aero-delay-prediction project
-import pandas as pd
-
 # import packages
 import pandas as pd
 from tqdm import tqdm
 from meteostat import Point, Hourly
-from datetime import datetime, timedelta
-import os
-import shutil
+from datetime import datetime
 import holidays
 import warnings
 

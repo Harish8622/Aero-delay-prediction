@@ -1,87 +1,85 @@
 # Aero Delay Prediction
 
-A minimal machine learning pipeline to predict flight delays.
+End-to-end ML pipeline for predicting flight delays, plus an interactive agent for querying results.
 
-## Quickstart
+## Architecture Diagram
 
-1. **Install dependencies:**
-    ```bash
-    pip install -r requirements.txt
-    ```
+[Place architecture diagram here]
 
-2. **Download datasets:**
-    - Flight delay and cancellation data:
-      ```python
-      download_data_path = kagglehub.dataset_download("patrickzel/flight-delay-and-cancellation-dataset-2019-2023")
-      ```
-    - Airport data from OpenFlight.
+## Repository Structure (High Level)
 
-3. **Run preprocessing:**
-    From the project root, execute:
-    ```bash
-    python -m ml_pipelines.run_preprocessing
-    ```
-    - You can select the cache directory (`True` or `False`).
+- `ml_pipelines/` preprocessing, training, and full pipeline runners
+- `data/` raw and cached datasets (local only)
+- `models/` trained artifacts and evaluation outputs
+- `agent/` interactive agent interface
+- `src/` shared utilities and core code
+- `notebooks/` exploration and experiments
+- `project_report.md` detailed training results and analysis
 
-4. **Run training:**
-    ```bash
-    python -m ml_pipelines.run_training
-    ```
+## Setup
 
-5. **Run full training pipeline:**
-    ```bash
-    python -m ml_pipelines.full_training_pipeline
-    ```
-
-
-
-Fix any reported issues before committing your code.
-## Development Tasks
-
-- Add unit tests.
-- Fix CI pipeline.
-- Add more print statements for debugging.
-- Ensure all column names are lowercase.
-- Proceed to model training.
-
-## Model Training
-
-### Grid Search Example
-
-```python
-param_dist = {
-     "n_estimators": [600, 900, 1200, 1800, 2400, 3000],
-     "learning_rate": np.logspace(np.log10(0.015), np.log10(0.12), 8),
-     "max_depth": [4, 5, 6, 7, 8],
-     "min_child_weight": [1.0, 2.0, 3.0, 5.0, 8.0],
-     "subsample": [0.65, 0.75, 0.85, 0.95],
-     "colsample_bytree": [0.65, 0.75, 0.85, 0.95],
-     "reg_lambda": [0.5, 1.0, 2.0, 3.0, 5.0, 8.0],
-     "reg_alpha": [0.0, 0.05, 0.1, 0.25, 0.5],
-     "gamma": [0.0, 0.2, 0.5, 1.0],
-     # keep scale_pos_weight fixed from y_train
-}
+```bash
+pip install -r requirements.txt
 ```
 
-## Classification Report
+Create a `.env` file in the project root with required credentials (for example, Kaggle):
 
-| Class | Precision | Recall | F1-score | Support |
-|-------|-----------|--------|----------|---------|
-| 0     | 0.867     | 0.682  | 0.763    | 220,983 |
-| 1     | 0.340     | 0.609  | 0.436    | 59,353  |
+```bash
+# .env
+KAGGLE_USERNAME=your_username
+KAGGLE_KEY=your_key
+```
 
-- **Accuracy:** 0.667 (280,336 samples)
-- **Macro avg:** Precision 0.603, Recall 0.646, F1-score 0.600
-- **Weighted avg:** Precision 0.755, Recall 0.667, F1-score 0.694
+## Data
 
-- Delay threshold: 15 minutes, wind threshold: 25
-- Now using threshold: 30 minutes, windspeed: 30, data from 2022-01-01 onwards
+1. Download flight delay and cancellation dataset:
+   ```python
+   download_data_path = kagglehub.dataset_download("patrickzel/flight-delay-and-cancellation-dataset-2019-2023")
+   ```
+2. Download airport metadata from OpenFlight.
+3. Save raw data under `data/` (for example, `data/raw/`), then keep derived caches under `data/cache/`.
 
-## Testing
+## Run the Pipeline
 
-- Test end-to-end pipeline.
-- Ensure unit tests are sufficient.
+From the project root:
+
+```bash
+python -m ml_pipelines.run_preprocessing
+python -m ml_pipelines.run_training
+```
+
+To run the full pipeline end-to-end:
+
+```bash
+python -m ml_pipelines.full_training_pipeline
+```
+
+## Training Outputs
+
+- Models and evaluation artifacts are written under `models/`.
+- Use `project_report.md` for all training results, metrics, and analysis details.
+
+## Run the Agent
+
+From the project root:
+
+```bash
+python -m agent.customer_agent
+```
+
+## Run the Web App (Localhost)
+
+From the project root:
+
+```bash
+pip install flask
+python -m agent.web_app
+```
+
+Then open `http://127.0.0.1:8000` in your browser.
 
 ## Next Steps
 
-python -m agent.customer_agent run from root
+- Move shared core functions into `src/` and rename agent core to `agent_core/`.
+- Add CI pipeline.
+- Add tests (unit + pipeline smoke test).
