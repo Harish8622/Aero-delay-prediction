@@ -14,24 +14,30 @@ def main():
     parser.add_argument("--iterations", type=int, default=p.iterations)
     parser.add_argument("--learning_rate", type=float, default=p.learning_rate)
     parser.add_argument("--depth", type=int, default=p.depth)
-    parser.add_argument("--l2_leaf_reg", type=float, default=p.l2_leaf_reg
-    )
+    parser.add_argument("--l2_leaf_reg", type=float, default=p.l2_leaf_reg)
 
- 
     args = parser.parse_args()
 
     cmd = [
         sys.executable,
         "-m",
         "src.training.catboost",  # run as module so 'from ml_pipelines...' works
-        "--data", args.data,
-        "--target", args.target,
-        "--model_dir", args.model_dir,
-        "--seed", str(args.seed),
-        "--iterations", str(args.iterations),
-        "--learning_rate", str(args.learning_rate),
-        "--depth", str(args.depth),
-        "--l2_leaf_reg", str(args.l2_leaf_reg),
+        "--data",
+        args.data,
+        "--target",
+        args.target,
+        "--model_dir",
+        args.model_dir,
+        "--seed",
+        str(args.seed),
+        "--iterations",
+        str(args.iterations),
+        "--learning_rate",
+        str(args.learning_rate),
+        "--depth",
+        str(args.depth),
+        "--l2_leaf_reg",
+        str(args.l2_leaf_reg),
     ]
     subprocess.run(cmd, check=True)
 

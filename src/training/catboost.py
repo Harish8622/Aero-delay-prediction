@@ -8,8 +8,12 @@ import numpy as np
 import pandas as pd
 from catboost import CatBoostClassifier, Pool
 from sklearn.metrics import (
-    accuracy_score, f1_score, roc_auc_score, average_precision_score,
-    classification_report, confusion_matrix
+    accuracy_score,
+    f1_score,
+    roc_auc_score,
+    average_precision_score,
+    classification_report,
+    confusion_matrix,
 )
 
 
@@ -17,8 +21,17 @@ def pick_feature_columns(df):
     """Return (cat_cols, num_cols) that actually exist in df."""
     cat_candidates = ["AIRLINE", "ORIGIN", "DEST"]
     num_candidates = [
-        "DISTANCE", "day_of_week", "month", "hour_of_day", "is_bank_holiday",
-        "dep_rain", "dep_ice", "dep_wind", "arr_rain", "arr_ice", "arr_wind",
+        "DISTANCE",
+        "day_of_week",
+        "month",
+        "hour_of_day",
+        "is_bank_holiday",
+        "dep_rain",
+        "dep_ice",
+        "dep_wind",
+        "arr_rain",
+        "arr_ice",
+        "arr_wind",
         # add continuous weather later if you have them:
         # "dep_temp", "dep_wspd", "dep_prcp", "arr_temp", "arr_wspd", "arr_prcp"
     ]
@@ -61,7 +74,9 @@ def main():
 
     # ---- Checks
     if "FL_DATE" not in df.columns:
-        raise ValueError("FL_DATE is required for time-based split (2022 train, 2023+ test).")
+        raise ValueError(
+            "FL_DATE is required for time-based split (2022 train, 2023+ test)."
+        )
     if args.target not in df.columns:
         raise ValueError(f"Target '{args.target}' not found in columns.")
 
@@ -69,12 +84,14 @@ def main():
     df["FL_DATE"] = pd.to_datetime(df["FL_DATE"], errors="coerce")
     df = df.dropna(subset=["FL_DATE"])
     train_mask = (df["FL_DATE"] >= "2019-01-01") & (df["FL_DATE"] <= "2022-12-31")
-    test_mask  = (df["FL_DATE"] >= "2023-01-01")
+    test_mask = df["FL_DATE"] >= "2023-01-01"
 
     df_train = df.loc[train_mask].copy()
-    df_test  = df.loc[test_mask].copy()
+    df_test = df.loc[test_mask].copy()
     if df_train.empty or df_test.empty:
-        raise ValueError(f"Empty split: train={len(df_train)}, test={len(df_test)}. Check FL_DATE range.")
+        raise ValueError(
+            f"Empty split: train={len(df_train)}, test={len(df_test)}. Check FL_DATE range."
+        )
 
     # ---- Features
     cat_cols, num_cols = pick_feature_columns(df)
@@ -82,17 +99,17 @@ def main():
     keep_cols = features + [args.target, "FL_DATE"]
 
     df_train = df_train[keep_cols].dropna(subset=[args.target])
-    df_test  = df_test[keep_cols].dropna(subset=[args.target])
+    df_test = df_test[keep_cols].dropna(subset=[args.target])
 
     # CatBoost can handle NaN in numeric; fill missing categoricals with 'UNK'
     for c in cat_cols:
         df_train[c] = df_train[c].astype("string").fillna("UNK")
-        df_test[c]  = df_test[c].astype("string").fillna("UNK")
+        df_test[c] = df_test[c].astype("string").fillna("UNK")
 
     X_train = df_train[features]
     y_train = df_train[args.target].astype(int).values
-    X_test  = df_test[features]
-    y_test  = df_test[args.target].astype(int).values
+    X_test = df_test[features]
+    y_test = df_test[args.target].astype(int).values
 
     print("Features:")
     print("  categoricals:", cat_cols)
@@ -105,7 +122,7 @@ def main():
 
     # ---- Pools
     train_pool = Pool(X_train, label=y_train, cat_features=cat_idx)
-    test_pool  = Pool(X_test,  label=y_test,  cat_features=cat_idx)
+    test_pool = Pool(X_test, label=y_test, cat_features=cat_idx)
 
     # ---- Imbalance handling
     neg, pos = int((y_train == 0).sum()), int((y_train == 1).sum())
@@ -119,13 +136,13 @@ def main():
         depth=args.depth,
         l2_leaf_reg=args.l2_leaf_reg,
         loss_function="Logloss",
-        eval_metric="AUC:use_weights=false",   # prints ROC-AUC; PR-AUC we’ll compute after
+        eval_metric="AUC:use_weights=false",  # prints ROC-AUC; PR-AUC we’ll compute after
         random_seed=args.seed,
         scale_pos_weight=spw,
         thread_count=-1,
         bootstrap_type="Bayesian",
-        verbose=50,               # progress every 50 iters
-        task_type="CPU",          # change to "GPU" if you have one
+        verbose=50,  # progress every 50 iters
+        task_type="CPU",  # change to "GPU" if you have one
     )
 
     print(f"Training CatBoost for {args.iterations} iterations...")
@@ -143,7 +160,10 @@ def main():
         "pr_auc": float(average_precision_score(y_test, proba)),
     }
     print("\nMetrics (threshold=0.5):", metrics)
-    print("\nClassification report @0.5:\n", classification_report(y_test, pred05, digits=3))
+    print(
+        "\nClassification report @0.5:\n",
+        classification_report(y_test, pred05, digits=3),
+    )
     print("Confusion matrix @0.5:\n", confusion_matrix(y_test, pred05))
 
     # Threshold sweep for best F1
@@ -151,11 +171,14 @@ def main():
     pred_best = (proba >= t_best).astype(int)
     print(f"\nBest F1 threshold ~ {t_best:.2f} (F1={f1_best:.3f})")
     print("Confusion matrix @best-F1:\n", confusion_matrix(y_test, pred_best))
-    print("Classification report @best-F1:\n", classification_report(y_test, pred_best, digits=3))
+    print(
+        "Classification report @best-F1:\n",
+        classification_report(y_test, pred_best, digits=3),
+    )
 
     # ---- Save artifacts
     model_path = os.path.join(args.model_dir, "catboost_time_split.cbm")
-    meta_path  = os.path.join(args.model_dir, "catboost_time_split.meta.json")
+    meta_path = os.path.join(args.model_dir, "catboost_time_split.meta.json")
     os.makedirs(args.model_dir, exist_ok=True)
     model.save_model(model_path)
 
@@ -167,7 +190,7 @@ def main():
                 "numeric_features": num_cols,
                 "target": args.target,
                 "train_range": ["2019-01-01", "2022-12-31"],
-                "test_range":  ["2023-01-01", None],
+                "test_range": ["2023-01-01", None],
                 "scale_pos_weight": spw,
                 "params": dict(
                     iterations=args.iterations,

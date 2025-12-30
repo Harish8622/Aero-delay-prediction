@@ -1,6 +1,3 @@
-# params for preprocessing
-import os
-
 
 class PreprocessingParams:
     def __init__(self):
