@@ -18,13 +18,8 @@ from src.agent_core.data_models import(
     airports,
 )
 
-<<<<<<< HEAD:agent/helpers/tools.py
-from agent.helpers.prompts import build_route_confirmation_prompt
-from agent.model_config import llm
-=======
 from src.agent_core.prompts import build_route_confirmation_prompt
 from src.agent_core.model_config import llm
->>>>>>> origin/main:src/agent_core/tools.py
 import os
 
 load_dotenv()
