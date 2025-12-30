@@ -81,13 +81,6 @@ Then open `http://127.0.0.1:8000` in your browser.
 
 ## Next Steps
 
-<<<<<<< HEAD
 - Move shared core functions into `src/` and rename agent core to `agent_core/`.
 - Add CI pipeline.
 - Add tests (unit + pipeline smoke test).
-=======
-python -m agent.customer_agent run from root
-
-
-move into agent core the core functionalities
->>>>>>> origin/main
