@@ -22,12 +22,13 @@ End-to-end ML pipeline for predicting flight delays, plus an interactive agent f
 pip install -r requirements.txt
 ```
 
-Create a `.env` file in the project root with required credentials (for example, Kaggle):
+Create a `.env` file in the project root with required credentials:
 
 ```bash
 # .env
-KAGGLE_USERNAME=your_username
-KAGGLE_KEY=your_key
+BASE_PATH=/Users/harish/Desktop/Aero-delay-prediction
+OPENAI_API_KEY=your_key_here
+VISUAL_CROSSING_KEY=your_key_here
 ```
 
 ## Data
