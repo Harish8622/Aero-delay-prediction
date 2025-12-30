@@ -2,7 +2,7 @@ from flask import Flask, request, render_template_string
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 
 from agent.customer_agent import build_agent_app
-from agent.helpers.prompts import agent_node_prompt
+from src.agent_core import agent_node_prompt
 
 
 app = build_agent_app()
