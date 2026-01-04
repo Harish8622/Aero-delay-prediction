@@ -1,5 +1,7 @@
 # ml_pipelines/preprocessing/run_preprocessing.py
-import subprocess, sys, argparse
+import argparse
+import subprocess
+import sys
 from ml_pipelines.params.preprocessing.preprocessing_params import PreprocessingParams
 
 

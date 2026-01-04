@@ -11,9 +11,7 @@ class TrainingParams:
         base_path = os.getenv("BASE_PATH")
         if not base_path:
             raise ValueError("BASE_PATH not set in .env")
-        self.data = os.path.join(
-            base_path, "test_date/data/processed/preprocessed_data.csv"
-        )
+        self.data = os.path.join(base_path, "data/processed/preprocessed_data.csv")
         self.target = "DELAY_FLAG_30"
         self.model_dir = os.path.join(base_path, "models")
         self.seed = 42

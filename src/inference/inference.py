@@ -1,12 +1,10 @@
-
-import pandas as pd 
+import pandas as pd
 from catboost import CatBoostClassifier, Pool
 from src.params.inference_params import InferenceParams
 
 
 params = InferenceParams()
 cat_candidates = params.cat_candidates
-
 
 
 def predict(
@@ -24,29 +22,33 @@ def predict(
     arr_rain,
     arr_ice,
     arr_wind,
-    model_path="models/catboost_time_split.cbm"
+    model_path="models/catboost_time_split.cbm",
 ):
     """
     Predict flight delay probability and class.
     All features must be provided explicitly.
     Returns: (probability, prediction)
     """
-    input_data = pd.DataFrame([{
-        "AIRLINE": airline,
-        "ORIGIN": origin,
-        "DEST": destination,
-        "DISTANCE": distance,
-        "day_of_week": day_of_week,
-        "month": month,
-        "hour_of_day": hour_of_day,
-        "is_bank_holiday": is_bank_holiday,
-        "dep_rain": dep_rain,
-        "dep_ice": dep_ice,
-        "dep_wind": dep_wind,
-        "arr_rain": arr_rain,
-        "arr_ice": arr_ice,
-        "arr_wind": arr_wind
-    }])
+    input_data = pd.DataFrame(
+        [
+            {
+                "AIRLINE": airline,
+                "ORIGIN": origin,
+                "DEST": destination,
+                "DISTANCE": distance,
+                "day_of_week": day_of_week,
+                "month": month,
+                "hour_of_day": hour_of_day,
+                "is_bank_holiday": is_bank_holiday,
+                "dep_rain": dep_rain,
+                "dep_ice": dep_ice,
+                "dep_wind": dep_wind,
+                "arr_rain": arr_rain,
+                "arr_ice": arr_ice,
+                "arr_wind": arr_wind,
+            }
+        ]
+    )
     cat_cols = [c for c in cat_candidates if c in input_data.columns]
     model = CatBoostClassifier()
     print(f"Loading model from {model_path} ...")
@@ -57,17 +59,18 @@ def predict(
     prediction = int(proba >= threshold)
     return proba, prediction
 
+
 if __name__ == "__main__":
     print("[INFO] Starting tactical inference example...")
     # Tactical (hardcoded) values for all model inputs
     airline = "AA"
     origin = "JFK"
     destination = "LAX"
-    distance = 100.  # Example: JFK-LAX distance in km
-    day_of_week = 1    # Tuesday
-    month = 7          # July
-    hour_of_day = 15   # 3 PM
-    is_holiday = 0     # Not a holiday
+    distance = 100.0  # Example: JFK-LAX distance in km
+    day_of_week = 1  # Tuesday
+    month = 7  # July
+    hour_of_day = 15  # 3 PM
+    is_holiday = 0  # Not a holiday
     dep_rain = 0
     dep_ice = 0
     dep_wind = 0
@@ -89,7 +92,7 @@ if __name__ == "__main__":
         dep_wind,
         arr_rain,
         arr_ice,
-        arr_wind
+        arr_wind,
     )
     print(f"[RESULT] Probability of delay: {proba:.3f}")
     print(f"[RESULT] Predicted delay (1=delay, 0=on time): {prediction}")

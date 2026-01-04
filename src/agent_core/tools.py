@@ -8,13 +8,13 @@ import pandas as pd
 
 from datetime import datetime
 from src.inference.inference import predict
-from src.agent_core.data_models import(
-    FlightParams, 
+from src.agent_core.data_models import (
+    FlightParams,
     FinalPrediction,
     DistanceParams,
     TemporalParams,
     WeatherParams,
-    airlines, 
+    airlines,
     airports,
 )
 
@@ -32,14 +32,14 @@ VISUAL_CROSSING_KEY = os.getenv("VISUAL_CROSSING_KEY")
 @tool
 def route_confirmation(user_query: str):
     """
-    for a user query extract airline, origin, destination and timestamp. 
+    for a user query extract airline, origin, destination and timestamp.
     for example "I am flying from JFK to LAX on Delta Air Lines next Friday at noon"
     If there is an error in extraction or validation, return the error message.
 
     args: user_query: str - the user's input query
 
     returns: dictionary with keys airline, origin, destination, timestamp
-    
+
     """
     now = datetime.now()
 
@@ -53,12 +53,14 @@ def route_confirmation(user_query: str):
         response: FlightParams = structured_llm.invoke(prompt)
     except ValidationError as e:
         return f"Invalid input: {e.errors()}"
-    
+
     return response
+
 
 # -----------------------
 # Tool: Get Distance
 # -----------------------
+
 
 def distance(lat1, lon1, lat2, lon2):
     """
@@ -70,11 +72,15 @@ def distance(lat1, lon1, lat2, lon2):
 
     dlat = radians(lat2 - lat1)
     dlon = radians(lon2 - lon1)
-    a = sin(dlat / 2)**2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2)**2
+    a = (
+        sin(dlat / 2) ** 2
+        + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2) ** 2
+    )
     c = 2 * atan2(sqrt(a), sqrt(1 - a))
     distance = R * c
 
     return distance
+
 
 @tool(args_schema=DistanceParams)
 def get_distance(origin, destination):
@@ -82,10 +88,10 @@ def get_distance(origin, destination):
     given two IATA codes, return the distance between them
     """
     try:
-        origin_data = airports[airports['IATA'] == origin].iloc[0]
-        dest_data = airports[airports['IATA'] == destination].iloc[0]
-        lat1, lon1 = origin_data['lat'], origin_data['lon']
-        lat2, lon2 = dest_data['lat'], dest_data['lon']
+        origin_data = airports[airports["IATA"] == origin].iloc[0]
+        dest_data = airports[airports["IATA"] == destination].iloc[0]
+        lat1, lon1 = origin_data["lat"], origin_data["lon"]
+        lat2, lon2 = dest_data["lat"], dest_data["lon"]
         return distance(lat1, lon1, lat2, lon2)
     except IndexError:
         raise ValueError("Invalid IATA code provided for origin or destination.")
@@ -95,9 +101,10 @@ def get_distance(origin, destination):
 # Tool: Get Temporal Features
 # -----------------------
 
+
 def get_temporal_features(timestamp):
     """
-    Given a timestamp, return day_of_week, month, hour_of_day, is_bank_holiday 
+    Given a timestamp, return day_of_week, month, hour_of_day, is_bank_holiday
     think about us time later
     """
     dt = pd.to_datetime(timestamp)
@@ -124,10 +131,11 @@ def get_temporal_features_node(timestamp: datetime):
 # Tool: Get Weather
 # -----------------------
 
+
 def get_weather(lat: float, lon: float, date: str = "now"):
     """
     Fetch live, historical, or forecast weather from Visual Crossing API.
-    
+
     Args:
         lat (float): Latitude of location.
         lon (float): Longitude of location.
@@ -139,22 +147,25 @@ def get_weather(lat: float, lon: float, date: str = "now"):
     Returns:
         dict: Weather data (temp, rain, snow, wind, conditions)
     """
-    base_url = "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline"
-    
+    base_url = (
+        "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/"
+        "timeline"
+    )
+
     # Build API URL
     url = f"{base_url}/{lat},{lon}/{date}"
     params = {
         "key": VISUAL_CROSSING_KEY,
         "unitGroup": "metric",
-        "include": "current,hours,days"
+        "include": "current,hours,days",
     }
-    
+
     resp = requests.get(url, params=params)
     data = resp.json()
-    
+
     if "days" not in data:
         raise ValueError(f"Weather API error: {data}")
-    
+
     # Pick the first day for simplicity
     weather = data["days"][0]
     return {
@@ -163,25 +174,27 @@ def get_weather(lat: float, lon: float, date: str = "now"):
         "rain_mm": weather.get("precip", 0),
         "snow_mm": weather.get("snow", 0),
         "conditions": weather.get("conditions", ""),
-        "date": weather.get("datetime", date)
+        "date": weather.get("datetime", date),
     }
+
 
 @tool(args_schema=WeatherParams)
 def weather_node(origin: str, destination: str, timestamp: str):
-    """ 
-    given origin, destination IATA codes and timestamp, return weather conditions at both airports
+    """
+    given origin, destination IATA codes and timestamp, return weather conditions
+    at both airports
     timestamp in format %Y-%m-%d %H:%M:%S
 
     returns:
         dep_rain (int): 1 if rain at departure, else 0
         dep_ice (int): 1 if ice at departure, else 0
-        dep_wind (int): 1 if high wind at departure, else 0 
+        dep_wind (int): 1 if high wind at departure, else 0
         arr_rain (int): 1 if rain at arrival, else 0
-        arr_ice (int): 1 if ice at arrival, else 0  
+        arr_ice (int): 1 if ice at arrival, else 0
         arr_wind (int): 1 if high wind at arrival, else 0
-        
 
-    
+
+
     """
     origin_code = origin
     dest_code = destination
@@ -208,19 +221,31 @@ def weather_node(origin: str, destination: str, timestamp: str):
     return dep_rain, dep_ice, dep_wind, arr_rain, arr_ice, arr_wind
 
 
-
 # -----------------------
 # Tool: Final Prediction
 # -----------------------
 
+
 @tool(args_schema=FinalPrediction)
-def final_prediction(airline, origin, destination, distance, day_of_week, month, hour_of_day, is_bank_holiday,
-                     dep_rain, dep_ice, dep_wind,       
-                     arr_rain, arr_ice, arr_wind):
-    
+def final_prediction(
+    airline,
+    origin,
+    destination,
+    distance,
+    day_of_week,
+    month,
+    hour_of_day,
+    is_bank_holiday,
+    dep_rain,
+    dep_ice,
+    dep_wind,
+    arr_rain,
+    arr_ice,
+    arr_wind,
+):
     """
     given all features, return delay probability and prediction"""
-        
+
     proba, prediction = predict(
         airline=airline,
         origin=origin,
@@ -232,15 +257,20 @@ def final_prediction(airline, origin, destination, distance, day_of_week, month,
         is_bank_holiday=is_bank_holiday,
         dep_rain=dep_rain,
         dep_ice=dep_ice,
-        dep_wind=dep_wind,       
+        dep_wind=dep_wind,
         arr_rain=arr_rain,
         arr_ice=arr_ice,
-        arr_wind=arr_wind
+        arr_wind=arr_wind,
     )
 
-    
     return {"delay_probability": proba, "delay_prediction": prediction}
 
+
 # define a list of tools
-tools = [route_confirmation, get_distance, get_temporal_features_node,
-         weather_node, final_prediction]
+tools = [
+    route_confirmation,
+    get_distance,
+    get_temporal_features_node,
+    weather_node,
+    final_prediction,
+]

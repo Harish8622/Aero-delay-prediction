@@ -15,5 +15,7 @@ xgboost
 catboost
 langchain 
 langchain-openai
-pydantic
+pydantic==2.12.5
+pydantic-settings==2.10.1
 langgraph
+deepeval==3.7.8

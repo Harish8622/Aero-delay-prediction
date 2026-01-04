@@ -5,12 +5,7 @@ from langgraph.graph.message import add_messages
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from typing_extensions import TypedDict
-from src.agent_core import (
-    llm,
-    tools,
-    agent_node_prompt,
-)
-
+from src.agent_core import llm, tools, agent_node_prompt, run_all_evaluations
 
 
 def build_agent_app():
@@ -51,9 +46,24 @@ if __name__ == "__main__":
     user_message = ""
 
     while user_message.lower() not in ["exit", "quit"]:
-        user_message = input("I am here to give you insights on your upcoing flight!  :  ")
+        user_message = input(
+            "I am here to give you insights on your upcoming flight!  :  "
+        )
+        if user_message.lower() in ["exit", "quit"]:
+            print("AI: Goodbye!")
+            break
         conversation_state["messages"].append(HumanMessage(content=user_message))
-        result_state = app.invoke(conversation_state)
-        response = result_state["messages"][-1]
-        print(f"\n AI: {response.content} \n")
-        conversation_state = result_state
+        success = False
+        retries = 0
+        while not success and retries < 3:
+            result_state = app.invoke(conversation_state)
+            response = result_state["messages"][-1]
+            success = run_all_evaluations(user_message, response.content)
+            retries += 1
+        if success:
+            print(f"\n AI: {response.content} \n")
+            conversation_state = result_state
+        else:
+            print(
+                "Sorry my quality checks failed after 3 attempts. Please try again.\n"
+            )

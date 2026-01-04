@@ -1,11 +1,10 @@
-
 class PreprocessingParams:
     def __init__(self):
         self.start_date = "2022-01-01"  # Start date for filtering flights 2019 onwards
         self.wind_kmh_threshold = 30  # Wind speed threshold for "wind" flag
         self.max_workers = 12  # Number of parallel fetch threads
         self.force_refresh = True  # If True, ignore cache and re-download
-        self.delay_threshold = 30  # Delay threshold in minutes for creating delay flags
+        self.delay_threshold = 60  # Delay threshold in minutes for creating delay flags
         self.columns_to_drop = [
             # Identifiers
             "FL_NUMBER",

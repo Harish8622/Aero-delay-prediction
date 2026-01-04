@@ -90,7 +90,8 @@ def main():
     df_test = df.loc[test_mask].copy()
     if df_train.empty or df_test.empty:
         raise ValueError(
-            f"Empty split: train={len(df_train)}, test={len(df_test)}. Check FL_DATE range."
+            f"Empty split: train={len(df_train)}, test={len(df_test)}. "
+            "Check FL_DATE range."
         )
 
     # ---- Features
@@ -136,7 +137,8 @@ def main():
         depth=args.depth,
         l2_leaf_reg=args.l2_leaf_reg,
         loss_function="Logloss",
-        eval_metric="AUC:use_weights=false",  # prints ROC-AUC; PR-AUC we’ll compute after
+        # Prints ROC-AUC; PR-AUC we will compute after.
+        eval_metric="AUC:use_weights=false",
         random_seed=args.seed,
         scale_pos_weight=spw,
         thread_count=-1,
