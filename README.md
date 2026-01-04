@@ -3,10 +3,9 @@
 Passengers are often caught off guard by delays. This project uses years of
 historical flight data to build an end-to-end delay prediction pipeline and pairs
 it with a LangGraph conversational agent. The agent combines the delay model with
-supporting tools to answer questions about upcoming flights, including whether a
+supporting tools and built in DeepEval evaluation to answer questions about upcoming flights, including whether a
 flight is predicted to be delayed, so passengers can plan with fewer surprises.
 
-Note: The current model is trained on U.S. flight delay data.
 
 ## Architecture Diagram
 
@@ -140,13 +139,20 @@ Run the same checks as CI:
 bash scripts/ci_check.sh
 ```
 
+## Limitations
+
+- The prediction model is only trained on US flight data so is not applicable to other countries.
+- There is still substantial room for improvement of the prediction model performance, which should be noted when receiving predictions from this model.
+- The agent evaluation only uses Bias and Relevancy metrics, it does not consider other metrics such as faithfulness regarding tool calls.
+
+
 ## Next Steps
 
 
-- Add more robust prompts
-- improve evaluations
-- add unit tests
-- improve prediction model
+- Add more robust prompts to limit scope of responses
+- improve evaluations to encompass faithfulness with respect to tool calls
+- add unit tests with a focus on feature engineering logic
+- improve prediction model and explore other model architectures to boost performance
 
 ✍️ Author
 
