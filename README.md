@@ -92,3 +92,4 @@ bash scripts/ci_check.sh
 - Add more robust prompts
 - improve evaluations
 - add unit tests
+- improve prediction model
