@@ -15,13 +15,11 @@ Aero Delay Prediction is a minimal machine learning pipeline developed to predic
 
 - Implemented a preprocessing pipeline (`python -m ml_pipelines.preprocessing.run_preprocessing`), configurable with cache options.
 - Ensured column names are standardized to lowercase.
-- Considering dropping rows with missing weather data for improved model reliability.
 
 ### Model Training
 
 - Performed grid search for hyperparameter optimization:
     - Parameters tuned include `n_estimators`, `learning_rate`, `max_depth`, `min_child_weight`, `subsample`, `colsample_bytree`, `reg_lambda`, `reg_alpha`, and `gamma`.
-    - Used classification metrics to evaluate model performance under different delay and wind speed thresholds.
 
 ## Training Results
 
@@ -52,16 +50,14 @@ param_dist = {
 - **Accuracy:** 0.667 (280,336 samples)
 - **Macro avg:** Precision 0.603, Recall 0.646, F1-score 0.600
 - **Weighted avg:** Precision 0.755, Recall 0.667, F1-score 0.694
-- Delay threshold: 15 minutes, wind threshold: 25
-- Updated setting: 30-minute delay, windspeed 30, data from 2022-01-01 onwards
+- Delay threshold: 30-minute delay, windspeed 30, data from 2022-01-01 onwards
 
 ### Evaluation
 
-- **Initial Results (Delay threshold: 15, Wind threshold: 25):**
+- **Initial Results (Delay threshold: 30, Wind threshold: 2530
     - Accuracy: 0.667
     - Decent recall, capturing many delays but with notable false positives.
-- **Updated Evaluation (Delay threshold: 30, Wind speed: 30, data from 2022 onward):**
-    - Working on cautious metrics and further threshold tuning.
+
 
 ## Next Steps
 
