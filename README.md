@@ -147,3 +147,11 @@ bash scripts/ci_check.sh
 - improve evaluations
 - add unit tests
 - improve prediction model
+
+✍️ Author
+
+Built by Harish Kumaravel for MLE portfolio, with emphasis on agentic workflows
+
+🚀 License
+
+MIT — feel free to fork and build upon.
