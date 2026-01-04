@@ -26,7 +26,7 @@ Create a `.env` file in the project root with required credentials:
 
 ```bash
 # .env
-BASE_PATH=/Users/harish/Desktop/Aero-delay-prediction
+BASE_PATH=/YOURSYSTEMPATH/Aero-delay-prediction
 OPENAI_API_KEY=your_key_here
 VISUAL_CROSSING_KEY=your_key_here
 ```
@@ -73,14 +73,22 @@ python -m agent.customer_agent
 From the project root:
 
 ```bash
-pip install flask
 python -m agent.web_app
 ```
 
 Then open `http://127.0.0.1:8000` in your browser.
 
+## Linting and Checks (Local)
+
+Run the same checks as CI:
+
+```bash
+bash scripts/ci_check.sh
+```
+
 ## Next Steps
 
-- Move shared core functions into `src/` and rename agent core to `agent_core/`.
-- Add CI pipeline.
-- Add tests (unit + pipeline smoke test).
+
+- Add more robust prompts
+- improve evaluations
+- add unit tests

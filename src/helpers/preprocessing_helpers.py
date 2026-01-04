@@ -6,6 +6,7 @@ import warnings
 import holidays
 import pandas as pd
 from meteostat import Hourly, Point
+from meteostat.interface.base import Base
 from tqdm import tqdm
 
 warnings.simplefilter("ignore")  # silence pandas FutureWarnings
@@ -297,6 +298,8 @@ def enrich_with_weather_flags(
 
     # 5) Fetch RAW with progress
     cache_path = Path(cache_dir)
+    Base.cache_dir = str(cache_path)
+    Base.autoclean = False
     raw_weather = _fetch_all_raw_with_progress(
         pairs, cache_path, max_workers, force_refresh
     )

@@ -2,7 +2,7 @@ from flask import Flask, request, render_template_string
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 
 from agent.customer_agent import build_agent_app
-from src.agent_core import agent_node_prompt
+from src.agent_core import agent_node_prompt, run_all_evaluations
 
 
 app = build_agent_app()
@@ -55,10 +55,23 @@ def chat():
     if request.method == "POST":
         msg = request.form.get("message", "").strip()
         if msg:
+            if msg.lower() in ["exit", "quit"]:
+                return render_template_string(PAGE, reply="Goodbye!", history=history)
             conversation_state["messages"].append(HumanMessage(content=msg))
-            result_state = app.invoke(conversation_state)
-            response = result_state["messages"][-1]
-            reply = response.content
+            success = False
+            retries = 0
+            while not success and retries < 3:
+                result_state = app.invoke(conversation_state)
+                response = result_state["messages"][-1]
+                reply = response.content
+                success = run_all_evaluations(msg, reply)
+                retries += 1
+            if not success:
+                reply = (
+                    f"{reply}\n\n"
+                    "Sorry, I'm having trouble providing a reliable response. "
+                    "Please try again."
+                )
             conversation_state["messages"] = result_state["messages"]
     for message in conversation_state["messages"]:
         if isinstance(message, HumanMessage):
