@@ -142,8 +142,8 @@ bash scripts/ci_check.sh
 ## Limitations
 
 ### Current Model Performance:
-    - The CatBoost classifier achieves ~0.67 accuracy with a 30-minute delay threshold.
-  The model prioritises recall (≈0.61) to capture a majority of delayed flights, at the cost of higher false positives (precision ≈0.34), reflecting the asymmetric cost of missed delays for passengers.
+- The CatBoost classifier achieves ~0.67 accuracy with a 30-minute delay threshold.
+- The model prioritises recall (≈0.61) to capture a majority of delayed flights, at the cost of higher false positives (precision ≈0.34), reflecting the asymmetric cost of missed delays for passengers.
     - This is a known limitation and classification performance will be improved upon in future iterations
 - The prediction model is only trained on US flight data so is not applicable to other countries.
 - The agent evaluation only uses Bias and Relevancy metrics, it does not consider other metrics such as faithfulness regarding tool calls.
