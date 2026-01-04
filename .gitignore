@@ -54,6 +54,7 @@ notebooks/weather_cache/
 
 # Models and outputs
 models/
+catboost_info/
 reports/
 *.pkl
 *.joblib
@@ -69,6 +70,9 @@ mlruns/
 .cache/
 tmp/
 temp/
+
+# deepeval telemetry
+.deepeval/
 
 # =========================================
 # OS-specific
