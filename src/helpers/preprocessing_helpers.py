@@ -1,15 +1,14 @@
-# import packages
-import pandas as pd
-from tqdm import tqdm
-from meteostat import Point, Hourly
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
-import holidays
+from pathlib import Path
 import warnings
 
-warnings.simplefilter("ignore")  # silence pandas FutureWarnings
+import holidays
+import pandas as pd
+from meteostat import Hourly, Point
+from tqdm import tqdm
 
-from pathlib import Path
-from concurrent.futures import ThreadPoolExecutor, as_completed
+warnings.simplefilter("ignore")  # silence pandas FutureWarnings
 
 
 # functiont o do this # load and filter dataset for rows after 31-07-2024
@@ -93,7 +92,10 @@ def _validate_flights(df_flights: pd.DataFrame) -> None:
 
 
 def _load_airports(airports_csv: str) -> pd.DataFrame:
-    """Load airports CSV (must include IATA, lat, lon). Returns DF indexed by IATA with ['lat','lon']."""
+    """
+    Load airports CSV (must include IATA, lat, lon). Returns DF indexed by IATA
+    with ['lat', 'lon'].
+    """
     ap = pd.read_csv(airports_csv)
     need = {"IATA", "lat", "lon"}
     miss = need - set(ap.columns)
@@ -108,7 +110,10 @@ def _load_airports(airports_csv: str) -> pd.DataFrame:
 
 
 def _build_needed_pairs(df: pd.DataFrame, ap: pd.DataFrame) -> pd.DataFrame:
-    """From flights with hour keys, build unique (IATA, year) pairs and attach lat/lon."""
+    """
+    From flights with hour keys, build unique (IATA, year) pairs and attach
+    lat/lon.
+    """
     dep_keys = df[["ORIGIN", "dep_hour_dt"]].rename(
         columns={"ORIGIN": "IATA", "dep_hour_dt": "ts"}
     )
@@ -135,7 +140,8 @@ def _fetch_airport_year_raw(
 ) -> pd.DataFrame:
     """
     Fetch RAW hourly weather for one (airport, year) from Meteostat.
-    Caches to Parquet as {IATA}_{year}_RAW.parquet with columns: ts, prcp, temp, wspd, IATA
+    Caches to Parquet as {IATA}_{year}_RAW.parquet with columns: ts, prcp, temp,
+    wspd, IATA.
     """
     cache_dir.mkdir(parents=True, exist_ok=True)
     fpath = cache_dir / f"{iata}_{year}_RAW.parquet"
@@ -214,7 +220,10 @@ def _compute_flags_from_raw(
 
 
 def _merge_flags(df: pd.DataFrame, wx_flags: pd.DataFrame) -> pd.DataFrame:
-    """Merge dep/arr flags into flights by (IATA, hour-key) and add *_missing columns."""
+    """
+    Merge dep/arr flags into flights by (IATA, hour-key) and add *_missing
+    columns.
+    """
     # Departure merge
     dep = (
         df[["ORIGIN", "dep_hour_dt"]]

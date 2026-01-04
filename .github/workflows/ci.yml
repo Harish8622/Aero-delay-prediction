@@ -20,19 +20,26 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt || true
-          # Try editable install if you have a pyproject/setup
-          pip install -e . || true
-          pip install pytest
+          pip install pytest flake8 flake8-pyproject "black[jupyter]" nbstripout
 
-      - name: Smoke import (skip if not yet a package)
+      - name: Lint (flake8)
+        run: flake8 .
+
+      - name: Format check (black)
+        run: black --check .
+
+      - name: Notebook check (nbstripout)
         run: |
-          python - << 'PY'
-          try:
-              import importlib; importlib.import_module('aero_delay')
-              print('Import OK')
-          except Exception as e:
-              print('Skipping import (package not ready):', e)
-          PY
+          if find . -name "*.ipynb" -print -quit | grep -q .; then
+            nbstripout --verify $(find . -name "*.ipynb")
+          else
+            echo "No notebooks to check"
+          fi
 
-      - name: Run tests (optional placeholder)
-        run: pytest -q || echo 'No tests yet'
+      - name: Run tests
+        run: |
+          if ls tests/*.py >/dev/null 2>&1; then
+            pytest -q
+          else
+            echo "No tests found, skipping."
+          fi

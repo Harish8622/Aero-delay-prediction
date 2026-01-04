@@ -1,5 +1,7 @@
 # ml_pipelines/preprocessing/run_traininf=g.py
-import subprocess, sys, argparse
+import argparse
+import subprocess
+import sys
 from ml_pipelines.params.training_params.training_params import TrainingParams
 
 

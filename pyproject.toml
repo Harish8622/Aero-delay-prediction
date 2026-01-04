@@ -1,0 +1,33 @@
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+exclude = '''
+/(
+  \.venv
+  | venv
+  | data
+  | models
+  | notebooks
+  | \.git
+  | \.mypy_cache
+  | \.pytest_cache
+  | .*\.ipynb
+)/
+'''
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.flake8]
+max-line-length = 88
+extend-exclude = [
+  ".venv",
+  "venv",
+  "data",
+  "models",
+  "notebooks",
+  ".git",
+  ".mypy_cache",
+  ".pytest_cache",
+]

@@ -1,7 +1,6 @@
 # pre processing script for the Aero-delay-prediction project
-import os
-import pandas as pd
 import argparse
+import os
 from src.helpers.preprocessing_helpers import (
     load_and_filter_dataset,
     removed_diverted_or_cancelled,

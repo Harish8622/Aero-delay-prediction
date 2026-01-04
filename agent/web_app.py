@@ -24,7 +24,8 @@ PAGE = """
 </style>
 <h1>Aero Delay Chatbot</h1>
 <form method="post">
-  <textarea id="message" name="message" placeholder="Ask about flight delays..."></textarea>
+  <textarea id="message" name="message"
+    placeholder="Ask about flight delays..."></textarea>
   <br><br>
   <button type="submit">Send</button>
 </form>

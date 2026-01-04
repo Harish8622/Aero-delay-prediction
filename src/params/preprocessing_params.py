@@ -1,4 +1,3 @@
-
 class PreprocessingParams:
     def __init__(self):
         self.start_date = "2022-01-01"  # Start date for filtering flights 2019 onwards

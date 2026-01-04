@@ -12,7 +12,6 @@ from src.agent_core import (
 )
 
 
-
 def build_agent_app():
     class AgentState(TypedDict):
         messages: Annotated[list, add_messages]
@@ -51,7 +50,9 @@ if __name__ == "__main__":
     user_message = ""
 
     while user_message.lower() not in ["exit", "quit"]:
-        user_message = input("I am here to give you insights on your upcoing flight!  :  ")
+        user_message = input(
+            "I am here to give you insights on your upcoing flight!  :  "
+        )
         conversation_state["messages"].append(HumanMessage(content=user_message))
         result_state = app.invoke(conversation_state)
         response = result_state["messages"][-1]
