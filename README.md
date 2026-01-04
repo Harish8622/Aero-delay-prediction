@@ -90,8 +90,9 @@ VISUAL_CROSSING_KEY=your_key_here
    ```python
    download_data_path = kagglehub.dataset_download("patrickzel/flight-delay-and-cancellation-dataset-2019-2023")
    ```
-2. Download airport metadata from OpenFlight.
+2. Download airport metadata (`airports.dat`) from [OpenFlights](https://openflights.org/data) and save as CSV.
 3. Save raw data under `data/` (for example, `data/raw/`), then keep derived caches under `data/cache/`.
+4. Confirm the input paths in `ml_pipelines/params/preprocessing/preprocessing_params.py` match the filenames you saved (for example, `data/raw/flights_sample_3m.csv` and `data/raw/airports.csv`).
 
 ## Run the Pipeline
 
