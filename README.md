@@ -41,7 +41,7 @@ flowchart LR
   C -- Yes --> D[Tools Node]
   D --> B
   C -- No --> E[Agent Response]
-  E --> F[Evaluation Loop up to 5 retries]
+  E --> F[Evaluation Loop up to 3 retries]
   F -- Pass --> G[Return Response]
   F -- Fail --> B
 ```
