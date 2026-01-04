@@ -1,10 +1,63 @@
 # Aero Delay Prediction
 
-End-to-end ML pipeline for predicting flight delays, plus an interactive agent for querying results.
+Passengers are often caught off guard by delays. This project uses years of
+historical flight data to build an end-to-end delay prediction pipeline and pairs
+it with a LangGraph conversational agent. The agent combines the delay model with
+supporting tools to answer questions about upcoming flights, including whether a
+flight is predicted to be delayed, so passengers can plan with fewer surprises.
+
+Note: The current model is trained on U.S. flight delay data.
 
 ## Architecture Diagram
 
-[Place architecture diagram here]
+### Preprocessing
+
+```mermaid
+flowchart LR
+  A[Flight Delay Data CSV] --> C[Load Data]
+  B[Airport Data CSV] --> C
+  C --> D[Filter and Clean Data]
+  D --> E[Enrich with Meteostat Weather Data]
+  E --> F[Feature Engineering]
+  F --> G[Save Processed Data]
+```
+
+### Training
+
+```mermaid
+flowchart LR
+  A[Processed Dataset] --> B[Time-Based Train/Test Split]
+  B --> C[Train CatBoost Model]
+  C --> D[Evaluate Metrics]
+  D --> E[Save Model Artifacts]
+```
+
+### Agent
+
+```mermaid
+flowchart LR
+  A[User Input] --> B[Agent Node: LLM with Tools]
+  B --> C{Tool Calls?}
+  C -- Yes --> D[Tools Node]
+  D --> B
+  C -- No --> E[Agent Response]
+  E --> F[Evaluation Loop up to 5 retries]
+  F -- Pass --> G[Return Response]
+  F -- Fail --> B
+```
+
+**Tools Available** 
+route confirmation, distance calculation, temporal feature, weather information, delay model inference.
+
+
+Example Agent Flow:
+- User asks: "Will my flight from Orlando to San Diego be delayed?"
+- Agent asks for missing details (airline and time).
+- User provides: "Delta, tomorrow afternoon."
+- Agent calls tools to build features for inference.
+- Agent calls the delay model inference tool to get a delay prediction.
+- Agent generates a response.
+- Evaluation checks relevance and bias; if it fails, the agent regenerates.
 
 ## Repository Structure (High Level)
 
